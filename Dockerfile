@@ -1,18 +1,10 @@
-# Use the official OpenJDK 17 image as the base image
-FROM openjdk:17-jdk-slim
-
-# Set the working directory inside the container
+FROM maven as builder
 WORKDIR /app
+COPY . /app/.
+RUN mvn -f /app/pom.xml clean package -Dmaven.test.skip=true
 
-# Argument for the JAR file location
-ARG JAR_FILE=target/*.jar
-
-# Copy the JAR file from the build directory into the container
-COPY ${JAR_FILE} /spring-boot-docker.jar
-
-# Expose the application port (change if your Spring Boot app runs on a different port)
+FROM openjdk
+WORKDIR /app
+COPY --from=builder /app/target/*.jar /app/*.jar
 EXPOSE 8080
-
-# Run the application
-ENTRYPOINT ["java", "-jar", "/spring-boot-docker.jar"]
-
+ENTRYPOINT ["java", "-jar", "/app/*.jar"]
